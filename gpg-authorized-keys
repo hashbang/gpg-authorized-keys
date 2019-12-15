@@ -1,0 +1,24 @@
+#!/bin/bash
+
+set -fuo pipefail
+
+[ -v GNUPG_HOME ] || exit 1
+
+IS_PUB=true
+
+gpg --with-colons --list-keys | \
+while read line; do
+    IFS=':' read -ra fields <<< "$line"
+    case "${fields[0]}" in
+      pub)
+        IS_PUB=true
+        ;;
+      sub)
+        IS_PUB=false
+        ;;
+      fpr)
+        [ "$IS_PUB" != true ] && continue;
+        gpg --export-ssh-key "${fields[9]}"
+        ;;
+    esac
+done
